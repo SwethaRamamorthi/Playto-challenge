@@ -8,14 +8,15 @@ import { ArrowLeft, Check, X, FileQuestion, FileText } from 'lucide-react';
 const SubmissionDetail = () => {
    const { id } = useParams();
    const navigate = useNavigate();
-   const { actionOnSubmission, loading: contextLoading } = useKyc();
+   const { user, actionOnSubmission, loading: contextLoading } = useKyc();
    const [submission, setSubmission] = useState(null);
    const [loading, setLoading] = useState(true);
 
    useEffect(() => {
       const load = async () => {
+         if (!user) return;
          try {
-            const data = await fetchSubmissionById(id);
+            const data = await fetchSubmissionById(id, user);
             setSubmission(data);
          } catch (err) {
             console.error(err);
@@ -24,7 +25,7 @@ const SubmissionDetail = () => {
          }
       };
       load();
-   }, [id]);
+   }, [id, user]);
 
    const handleAction = async (status) => {
       let reason = "";

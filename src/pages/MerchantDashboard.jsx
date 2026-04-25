@@ -5,7 +5,7 @@ import { StatusBadge } from '../components/StatusBadge';
 import { CheckCircle, Save, Send } from 'lucide-react';
 
 const MerchantDashboard = () => {
-   const { submitApplication, loading, addNotification } = useKyc();
+   const { user, submitApplication, submissions, loadSubmissions, loading, addNotification } = useKyc();
    const [step, setStep] = useState(1);
    const [currentStatus, setCurrentStatus] = useState('draft');
    const [isSubmittedSuccessfully, setIsSubmittedSuccessfully] = useState(false);
@@ -16,6 +16,26 @@ const MerchantDashboard = () => {
       documents: []
    });
 
+   // Load existing submissions to check for draft
+   React.useEffect(() => {
+     loadSubmissions();
+   }, [user]);
+
+   // If a draft exists, populate the form
+   React.useEffect(() => {
+      const draft = submissions.find(s => s.status === 'draft' || s.status === 'under_review');
+      if (draft) {
+         setFormData({
+            id: draft.id,
+            personalDetails: draft.personalDetails,
+            businessDetails: draft.businessDetails,
+            documents: draft.documents
+         });
+         setCurrentStatus(draft.status);
+         if (draft.status === 'under_review') setIsSubmittedSuccessfully(true);
+      }
+   }, [submissions]);
+
    const handlePersonal = (e) => setFormData({ ...formData, personalDetails: { ...formData.personalDetails, [e.target.name]: e.target.value } });
    const handleBusiness = (e) => setFormData({ ...formData, businessDetails: { ...formData.businessDetails, [e.target.name]: e.target.value } });
    const handleFiles = (files) => setFormData({ ...formData, documents: files });
@@ -24,7 +44,7 @@ const MerchantDashboard = () => {
       try {
          await submitApplication({ ...formData, isDraft });
          if(!isDraft) {
-            setCurrentStatus('submitted');
+            setCurrentStatus('under_review');
             setIsSubmittedSuccessfully(true);
          }
       } catch (err) {
